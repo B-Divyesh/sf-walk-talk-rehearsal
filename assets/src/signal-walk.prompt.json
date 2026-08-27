@@ -1,0 +1,10 @@
+{
+  "asset": "signal-walk.png",
+  "date": "2026-08-27",
+  "generator": "/opt/fleet/lib/gen-image.sh",
+  "deployment": "factory-image",
+  "size": "1536x1024",
+  "quality": "high",
+  "prompt": "Use case: stylized-concept. Asset type: responsive landing dashboard illustration. Primary request: an original 16-bit demoscene pixel-art scene of a solitary androgynous language learner walking on a clearly separated safe footpath at night, speaking toward a small phone; cyan prompt blocks travel ahead and apricot waveform tiles return behind, visualizing prompt-speak-replay. Scene/backdrop: abstract navy city silhouettes, tiny lime wayfinding lights, starless dusk. Style/medium: hand-pixeled demoscene key art, crisp square pixels, limited color clusters, no anti-aliased vector look. Composition: wide orthographic side view, figure on the right third, clean breathing room on the left, strong readable silhouette. Palette: #090D18, #11192A, #44E6E1, #FF9A6C, #C7F36B, #F4F7EA. Constraints: person remains on the safe footpath and aware of surroundings; no text, no logo, no watermark. Avoid: photorealism, brand devices, cars near subject, headphones, readable glyphs, gradients, anatomical artifacts.",
+  "review": "Accepted: clear safe footpath; one coherent figure; no logos, text artifacts, watermarks, or anatomical defects; palette and prompt/waveform metaphor match the visual thesis."
+}
