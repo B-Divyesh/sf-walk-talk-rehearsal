@@ -6,14 +6,15 @@ const DAY = 86_400_000;
 
 interface Verdict { valid: boolean; checkedAt: number; reason?: string }
 
-export function captureLicense(): void {
+export function captureLicense(): boolean {
   const url = new URL(location.href);
   const token = url.searchParams.get('license');
-  if (!token) return;
+  if (!token) return false;
   localStorage.setItem(TOKEN_KEY, token);
   localStorage.removeItem(CACHE_KEY);
   url.searchParams.delete('license');
   history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+  return true;
 }
 
 export function storeLicense(token: string): void {

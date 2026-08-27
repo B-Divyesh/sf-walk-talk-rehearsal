@@ -403,7 +403,7 @@ window.addEventListener('online', () => { online = true; render(); });
 window.addEventListener('offline', () => { online = false; render(); });
 
 async function init(): Promise<void> {
-  captureLicense();
+  if (captureLicense()) unlocked = true;
   [decks, takes, settings] = await Promise.all([db.decks(), db.takes(), db.settings()]);
   render();
   try {
