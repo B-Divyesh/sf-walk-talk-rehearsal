@@ -1,0 +1,9 @@
+{
+  "slug": "walk-talk-rehearsal",
+  "title": "Walk & Talk Rehearsal",
+  "artifact_class": "pwa-offline",
+  "user": "A language learner walking or commuting who needs on-demand speaking prompts and deliberate replay without needing a live tutor, partner, or cloud recording.",
+  "smallest_useful_product": "A mobile-first PWA that plays user-authored scenario prompts, gives a configurable silent speaking gap, lets users optionally record locally, and schedules a later replay.",
+  "monetization": "one-time",
+  "constraints": "Microphone permission is optional and recordings never upload; clearly warn users about outdoor awareness; provide text-only mode and accessible controls."
+}
