@@ -37,7 +37,7 @@ The deployment command is exactly `npm run build`. Output is `dist/`, with `dist
   - Reloaded the installed app with `context.setOffline(true)` and verified the functional local shell and offline state.
 - Browser console smoke test at 390×844: zero errors, correct title, exactly one `h1`.
 - `npm audit --omit=dev`: zero vulnerabilities (full install also reported zero after dependency updates).
-- Production asset budget: 32.10 KB JS (11.54 KB gzip), 16.03 KB CSS (4.40 KB gzip), no font payload, 26.99 KB WebP hero.
+- Production asset budget: 32.12 KB JS (11.55 KB gzip), 16.03 KB CSS (4.40 KB gzip), no font payload, 26.99 KB WebP hero.
 - Lighthouse 12.8.2 mobile: Performance 100, Accessibility 100, Best Practices 100, SEO 100. FCP 1.0 s, LCP 1.6 s, CLS 0, TBT 60 ms, interactive 1.6 s.
 - Visual review completed at 390×844 and 1440×1000.
 
