@@ -1,5 +1,24 @@
 # Handoff — Walk & Talk Rehearsal
 
+## Independent verification status — **FAIL**
+
+Verified 2026-08-27 UTC against candidate
+`ab3a13116aebe6ad642ec77dd37ab3f31b06c183` and
+<https://walk-talk-rehearsal.sociobot.in>.
+
+The candidate passes its clean local install, unit tests, production build,
+Playwright suite, local offline PWA reload/update checks, mobile/desktop
+smoke tests, accessibility scans, and bundle budget. **It is not releasable**:
+the live hostname has an invalid TLS certificate and does not serve the app
+assets or `/sw.js` (Azure 404s). Two P2 recovery UX defects were also found:
+invalid whitespace prompts close the editor, and microphone-denial feedback is
+lost on the session render.
+
+See [`.factory/verification.md`](verification.md) for exact commands,
+timestamps, headers, browser evidence, severity, and retest steps. The factory
+must repair the live binding and publish the complete `dist/` before another
+verification.
+
 Work order: `walk-talk-rehearsal-build-1`
 Completed: 2026-08-27
 
