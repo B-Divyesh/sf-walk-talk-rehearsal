@@ -2,7 +2,11 @@ const CACHE = 'walk-talk-v1';
 const SHELL = self.__PRECACHE_MANIFEST || ['/', '/index.html', '/offline.html', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png', '/assets/signal-walk.webp'];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));
+  event.waitUntil(caches.open(CACHE).then((cache) => Promise.all(SHELL.map(async (url) => {
+    const response = await fetch(new Request(url, { cache: 'reload' }));
+    if (!response.ok) throw new Error(`Could not cache ${url}`);
+    await cache.put(url, response);
+  }))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (event) => {
@@ -16,10 +20,10 @@ self.addEventListener('fetch', (event) => {
   if (event.request.mode === 'navigate') {
     event.respondWith(fetch(event.request).then((response) => {
       const copy = response.clone(); caches.open(CACHE).then((cache) => cache.put(event.request, copy)); return response;
-    }).catch(async () => (await caches.match(event.request)) || (await caches.match('/index.html')) || caches.match('/offline.html')));
+    }).catch(async () => (await caches.match(event.request, { ignoreVary: true })) || (await caches.match('/index.html', { ignoreVary: true })) || caches.match('/offline.html', { ignoreVary: true })));
     return;
   }
-  event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {
+  event.respondWith(caches.match(event.request, { ignoreVary: true }).then((cached) => cached || fetch(event.request).then((response) => {
     if (response.ok) { const copy = response.clone(); caches.open(CACHE).then((cache) => cache.put(event.request, copy)); }
     return response;
   })));

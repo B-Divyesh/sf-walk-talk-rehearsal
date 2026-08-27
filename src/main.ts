@@ -60,10 +60,10 @@ function icon(name: 'walk' | 'plus' | 'play' | 'mic' | 'replay' | 'settings' | '
   return `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${paths[name]}</svg>`;
 }
 
-function shell(content: string): string {
+function shell(content: string, settingsControl = true): string {
   return `<header class="site-header">
-    <a class="brand" href="/" aria-label="Walk & Talk home"><span class="brand-mark" aria-hidden="true">W/T</span><span>Walk &amp; Talk</span></a>
-    <nav aria-label="Primary"><a href="/#decks">Decks</a><a href="/#replays">Replays</a><button class="nav-button" data-action="settings" aria-label="Settings">${icon('settings')}<span>Settings</span></button></nav>
+    <a class="brand" href="/"><span class="brand-mark" aria-hidden="true">W/T</span><span>Walk &amp; Talk</span></a>
+    <nav aria-label="Primary"><a href="/#decks">Decks</a><a href="/#replays">Replays</a>${settingsControl ? `<button class="nav-button" data-action="settings" aria-label="Settings">${icon('settings')}<span>Settings</span></button>` : '<a href="/">Home</a>'}</nav>
   </header>
   ${content}
   <footer><p><span class="pixel-dot" aria-hidden="true"></span> Local by design. Your voice stays here.</p><div><a href="/privacy">Privacy</a><a href="/terms">Terms</a><span>Original AI-generated art</span></div></footer>
@@ -115,7 +115,7 @@ function renderDialogs(): string {
 function legalPage(kind: 'privacy' | 'terms'): void {
   const privacy = `<main id="main" class="legal"><p class="section-number">LOCAL-FIRST POLICY</p><h1>Privacy, in plain language</h1><p class="lede">Your rehearsal belongs to you. Walk &amp; Talk has no account system, analytics, advertising tracker, or recording server.</p><h2>What stays on your device</h2><p>Your decks, settings, rehearsal history, and audio takes are stored in your browser’s IndexedDB. Audio is created only when you explicitly start a recorded session and grant microphone access. Nothing is uploaded by this app.</p><h2>License checks</h2><p>If you buy or restore the one-time unlock, the license token is stored in localStorage and sent to Sociobot’s verification endpoint no more than once per day. Payment is handled by Sociobot/Dodo as merchant of record under their applicable policies.</p><h2>Your controls</h2><p>You can export all local data, delete individual recordings, or erase everything from Settings. Removing site data in your browser also removes it. Uninstalling without an export may permanently delete your recordings.</p><h2>Permissions and network</h2><p>Microphone access is optional. The app’s core deck and timer features work without it. After first load, the app shell works offline. License verification requires a network connection, but never blocks the free experience.</p><p><a class="button quiet" href="/">← Back to rehearsal</a></p></main>`;
   const terms = `<main id="main" class="legal"><p class="section-number">TERMS OF USE</p><h1>Walk, talk, stay aware</h1><p class="lede">Walk &amp; Talk is a self-guided rehearsal utility, not instruction, translation, emergency guidance, or speech assessment.</p><h2>Use safely</h2><p>Stay aware of traffic, people, and your environment. Pause the app before crossings or anywhere attention is required. You are responsible for choosing a safe time and place to use audio or recording features.</p><h2>Your content</h2><p>You retain responsibility for and ownership of the prompts and recordings you create. The app stores them locally and does not provide backup unless you export your data.</p><h2>One-time unlock</h2><p>The $12 purchase unlocks unlimited locally stored takes for this product. Sociobot/Dodo is merchant of record. Refunds are handled there and revoke the associated license. A valid license may be restored on another device with the provided token.</p><h2>Availability</h2><p>The software is provided “as is” under its MIT license, without guarantees that browser speech synthesis, microphone access, or persistent storage will be available on every device.</p><p><a class="button quiet" href="/">← Back to rehearsal</a></p></main>`;
-  app.innerHTML = shell(kind === 'privacy' ? privacy : terms);
+  app.innerHTML = shell(kind === 'privacy' ? privacy : terms, false);
   bindCommon();
 }
 
@@ -293,6 +293,7 @@ async function finishGap(): Promise<void> {
   }
   await db.saveDeck(session.deck); decks = decks.map((deck) => deck.id === session?.deck.id ? structuredClone(session.deck) : deck);
   session.phase = 'review'; render();
+  if (settings.autoAdvance) window.setTimeout(() => { if (session?.phase === 'review') void schedule(1); }, 1800);
 }
 
 function togglePause(): void {
