@@ -44,8 +44,25 @@ Results on 2026-08-28 UTC:
 - `npm audit --omit=dev`: 0 vulnerabilities.
 - Build payload: JavaScript 32.74 KB (11.74 KB gzip), CSS 16.35 KB (4.49 KB gzip), no webfont payload; all remain within the static PWA budgets.
 
-## Deployment and remaining notes
+## Deployment and live verification
 
-Deploy the generated `dist/` directory to Azure Static Web App `sf-walk-talk-rehearsal` in resource group `sociobot` using its production environment. The static-host configuration is part of that directory, so it must be deployed with every release. Live deployment/header identity evidence is recorded after publication.
+Production deployment completed with Azure Static Web Apps CLI to
+`sf-walk-talk-rehearsal` (resource group `sociobot`), production environment.
+The deployed product revision is `4c5bc9e` (following repair `3e7d312`).
+
+- `https://walk-talk-rehearsal.sociobot.in/` returns the exact SHA-256 of this
+  build's `dist/index.html`: `2d8cbf19687eaa72470e71ff0b8db17f0da15ec18a9d2778b9df7116c3f6b6cc`.
+- The live hashed JavaScript byte-matches this build:
+  `470489ddf085ad2ac4512eeaeb8ba00e2583d530d6c00beafebcee0cf04df3ca`.
+- Live hashed assets return `Cache-Control: public, max-age=31536000, immutable`.
+  The manifest returns `Content-Type: application/manifest+json` and
+  `Cache-Control: public, max-age=3600`.
+- The live response has CSP with `frame-ancestors 'none'`, `X-Frame-Options:
+  DENY`, a microphone-self-only Permissions-Policy, nosniff, strict referrer
+  policy, and HSTS.
+- Live Chromium smoke checks at 1440×1000 and 390×844 each had the expected
+  title, one `h1`, one `main`, an active service-worker controller, a
+  successful offline reload, zero console/page errors, and zero external
+  request origins.
 
 Known product limits remain intentional: speech synthesis voice availability and MediaRecorder support are browser-dependent; the text-only and unrecorded paths remain usable. Decks, settings, history, and recordings remain local browser data, so users should export before clearing site data or uninstalling.
