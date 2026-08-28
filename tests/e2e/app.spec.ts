@@ -40,6 +40,45 @@ test('keeps a deck editor open with its values when prompts contain only whitesp
   await expect(prompts).toBeFocused();
 });
 
+test('keeps Settings open and local decks intact after a malformed backup import', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Build your first deck' }).click();
+  await page.getByLabel('Deck name').fill('Existing commuter deck');
+  await page.getByLabel(/Prompts/).fill('Ask whether the bus stops at the museum.');
+  await page.getByRole('button', { name: 'Save deck' }).click();
+
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await page.locator('#import-file').setInputFiles({
+    name: 'broken-walk-talk-backup.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from('{bad'),
+  });
+
+  const settingsDialog = page.locator('#settings-dialog');
+  await expect(settingsDialog).toBeVisible();
+  await expect(settingsDialog).toHaveJSProperty('open', true);
+  await expect(page.locator('#import-error')).toHaveText('That file is not a valid Walk & Talk backup.');
+  await expect(page.getByRole('button', { name: 'Import' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Import' })).toBeFocused();
+
+  const storedDeckNames = await page.evaluate(async () => {
+    const database = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open('walk-talk-rehearsal');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const transaction = database.transaction('decks', 'readonly');
+    const request = transaction.objectStore('decks').getAll();
+    const decks = await new Promise<Array<{ name: string }>>((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    database.close();
+    return decks.map((deck) => deck.name);
+  });
+  expect(storedDeckNames).toEqual(['Existing commuter deck']);
+});
+
 test('explains a denied microphone permission throughout an unrecorded session', async ({ page }) => {
   await page.addInitScript(() => {
     Object.defineProperty(navigator, 'mediaDevices', {

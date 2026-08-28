@@ -110,7 +110,7 @@ function renderPro(): string {
 
 function renderDialogs(): string {
   return `<dialog id="deck-dialog" aria-labelledby="deck-dialog-title"><form id="deck-form"><div class="dialog-head"><div><p class="eyebrow">SCENARIO DECK</p><h2 id="deck-dialog-title">Build a rehearsal</h2></div><button class="icon-button" value="cancel" formmethod="dialog" aria-label="Close">×</button></div><input type="hidden" name="deckId"><label>Deck name<input name="name" required maxlength="60" placeholder="Checking into a hotel"></label><div class="form-grid"><label>Context<input name="context" maxlength="100" placeholder="What I need before the next trip"></label><label>Language<input name="language" maxlength="40" placeholder="Italian"></label></div><label>Prompts <span>one per line</span><textarea name="prompts" required rows="7" aria-describedby="deck-prompts-error deck-prompts-hint" placeholder="Ask whether breakfast is included.&#10;Explain that the room key does not work."></textarea></label><p id="deck-prompts-error" class="form-error hidden" role="alert"></p><p id="deck-prompts-hint" class="form-hint">Write cues in your everyday language. Your answer is what you practise in the target language.</p><div class="dialog-actions"><button class="text-button danger hidden" type="button" data-action="delete-deck">Delete deck</button><span></span><button class="button quiet" value="cancel" formmethod="dialog">Cancel</button><button class="button primary" type="submit">Save deck</button></div></form></dialog>
-  <dialog id="settings-dialog" aria-labelledby="settings-title"><form id="settings-form"><div class="dialog-head"><div><p class="eyebrow">FIELD CONTROLS</p><h2 id="settings-title">Rehearsal settings</h2></div><button class="icon-button" value="cancel" formmethod="dialog" aria-label="Close">×</button></div><label for="gap">Speaking gap <output id="gap-output">${settings.gapSeconds} seconds</output><input id="gap" type="range" name="gapSeconds" min="5" max="90" step="5" value="${settings.gapSeconds}"></label><label class="switch-row"><span><strong>Text-only mode</strong><small>Never speak prompts aloud</small></span><input type="checkbox" name="textOnly" ${settings.textOnly ? 'checked' : ''}></label><label class="switch-row"><span><strong>Auto-advance</strong><small>Move on after scheduling a response</small></span><input type="checkbox" name="autoAdvance" ${settings.autoAdvance ? 'checked' : ''}></label><div class="data-tools"><h3>Your local data</h3><p>Export decks, settings, and recordings as one JSON file.</p><div class="button-row"><button class="button quiet" type="button" data-action="export">${icon('download')}Export</button><button class="button quiet" type="button" data-action="import">Import</button><button class="text-button danger" type="button" data-action="clear-data">Erase all</button></div><input class="visually-hidden" id="import-file" type="file" accept="application/json"></div><div class="dialog-actions"><span></span><button class="button quiet" value="cancel" formmethod="dialog">Cancel</button><button class="button primary" type="submit">Save settings</button></div></form></dialog>`;
+  <dialog id="settings-dialog" aria-labelledby="settings-title"><form id="settings-form"><div class="dialog-head"><div><p class="eyebrow">FIELD CONTROLS</p><h2 id="settings-title">Rehearsal settings</h2></div><button class="icon-button" value="cancel" formmethod="dialog" aria-label="Close">×</button></div><label for="gap">Speaking gap <output id="gap-output">${settings.gapSeconds} seconds</output><input id="gap" type="range" name="gapSeconds" min="5" max="90" step="5" value="${settings.gapSeconds}"></label><label class="switch-row"><span><strong>Text-only mode</strong><small>Never speak prompts aloud</small></span><input type="checkbox" name="textOnly" ${settings.textOnly ? 'checked' : ''}></label><label class="switch-row"><span><strong>Auto-advance</strong><small>Move on after scheduling a response</small></span><input type="checkbox" name="autoAdvance" ${settings.autoAdvance ? 'checked' : ''}></label><div class="data-tools"><h3>Your local data</h3><p>Export decks, settings, and recordings as one JSON file.</p><div class="button-row"><button class="button quiet" type="button" data-action="export">${icon('download')}Export</button><button class="button quiet" type="button" data-action="import" aria-describedby="import-error">Import</button><button class="text-button danger" type="button" data-action="clear-data">Erase all</button></div><input class="visually-hidden" id="import-file" type="file" accept="application/json"><p id="import-error" class="form-error hidden" role="alert" aria-live="assertive"></p></div><div class="dialog-actions"><span></span><button class="button quiet" value="cancel" formmethod="dialog">Cancel</button><button class="button primary" type="submit">Save settings</button></div></form></dialog>`;
 }
 
 function legalPage(kind: 'privacy' | 'terms'): void {
@@ -173,7 +173,11 @@ function bindHome(): void {
     if (action === 'reviewed') await rescheduleTake(id ?? '', 7);
     if (action === 'delete-take') await deleteTake(id ?? '');
     if (action === 'export') await exportData();
-    if (action === 'import') document.querySelector<HTMLInputElement>('#import-file')?.click();
+    if (action === 'import') {
+      const error = document.querySelector<HTMLElement>('#import-error');
+      if (error) { error.textContent = ''; error.classList.add('hidden'); }
+      document.querySelector<HTMLInputElement>('#import-file')?.click();
+    }
     if (action === 'clear-data') await clearData();
   }));
 
@@ -375,7 +379,15 @@ async function importData(event: Event): Promise<void> {
     for (const item of data.takes) { const response = await fetch(item.audio); await db.saveTake({ ...item, audio: await response.blob() }); }
     await db.saveSettings(data.settings); decks = await db.decks(); takes = await db.takes(); settings = await db.settings();
     document.querySelector<HTMLDialogElement>('#settings-dialog')?.close(); announce('Backup imported. Existing items with the same ID were updated.');
-  } catch { announce('That file is not a valid Walk & Talk backup.'); }
+  } catch {
+    const error = document.querySelector<HTMLElement>('#import-error');
+    if (error) {
+      error.textContent = 'That file is not a valid Walk & Talk backup.';
+      error.classList.remove('hidden');
+    }
+    (event.target as HTMLInputElement).value = '';
+    document.querySelector<HTMLButtonElement>('[data-action="import"]')?.focus();
+  }
 }
 
 async function clearData(): Promise<void> {
