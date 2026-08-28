@@ -104,3 +104,46 @@ test('installed app shell reloads offline', async ({ page, context }) => {
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Speak before');
   await expect(page.getByText('OFFLINE / all local')).toBeVisible();
 });
+
+test('keeps a forged URL license locked when verification is unavailable', async ({ page }) => {
+  await page.route('https://api.sociobot.in/**', (route) => route.abort());
+  await page.goto('/?license=forged-token');
+
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole('heading', { name: 'Keep every take' })).toBeVisible();
+  await expect(page.getByText('Could not verify the license yet.')).toBeVisible();
+  await expect(page.locator('.license-active')).toHaveCount(0);
+
+  await page.evaluate(async () => {
+    const database = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open('walk-talk-rehearsal');
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const now = Date.now();
+    const deck = {
+      id: 'license-cap-deck', name: 'Free take limit', context: 'Regression coverage', language: 'French', createdAt: now, updatedAt: now,
+      prompts: [{ id: 'license-cap-prompt', text: 'Ask for the station.', createdAt: now, repetitions: 0 }],
+    };
+    const transaction = database.transaction(['decks', 'takes'], 'readwrite');
+    transaction.objectStore('decks').put(deck);
+    for (let index = 0; index < 5; index += 1) {
+      transaction.objectStore('takes').put({
+        id: `license-cap-take-${index}`, promptId: deck.prompts[0].id, deckId: deck.id, promptText: deck.prompts[0].text,
+        createdAt: now, durationMs: 1_000, nextReplayAt: now + 86_400_000, mimeType: 'audio/webm', audio: new Blob(['take']),
+      });
+    }
+    await new Promise<void>((resolve, reject) => {
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+      transaction.onabort = () => reject(transaction.error);
+    });
+    database.close();
+  });
+
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Free take limit' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Keep every take' })).toBeVisible();
+  await page.getByRole('button', { name: 'Record', exact: true }).click();
+  await expect(page.getByText('Your five free takes are full.')).toBeVisible();
+});

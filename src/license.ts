@@ -26,7 +26,8 @@ export function cachedUnlock(): boolean {
   if (!localStorage.getItem(TOKEN_KEY)) return false;
   try {
     const cached = JSON.parse(localStorage.getItem(CACHE_KEY) ?? 'null') as Verdict | null;
-    return cached?.valid === true;
+    const age = cached ? Date.now() - cached.checkedAt : Number.NaN;
+    return cached?.valid === true && Number.isFinite(age) && age >= 0 && age < DAY;
   } catch { return false; }
 }
 

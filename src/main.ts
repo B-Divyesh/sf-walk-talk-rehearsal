@@ -386,9 +386,10 @@ async function clearData(): Promise<void> {
 async function restoreLicense(event: SubmitEvent): Promise<void> {
   event.preventDefault(); const input = document.querySelector<HTMLInputElement>('#license-token'); if (!input?.value.trim()) return;
   storeLicense(input.value);
-  try { const result = await verifyLicense(true); unlocked = result?.valid === true; licenseNotice = unlocked ? 'License restored. Unlimited local takes are active.' : 'That license is not active. Check the token and try again.'; }
-  catch { licenseNotice = 'Could not check the license. Your free features still work; try again when online.'; }
+  unlocked = false;
+  licenseNotice = 'Checking your license. Free features stay available until it is confirmed.';
   render();
+  await refreshLicense(true);
 }
 
 document.addEventListener('click', (event) => {
@@ -410,17 +411,33 @@ document.addEventListener('keydown', (event) => {
   if (event.code === 'Space' && session.phase === 'gap' && !(event.target instanceof HTMLButtonElement)) { event.preventDefault(); togglePause(); }
 });
 
-window.addEventListener('online', () => { online = true; render(); });
+window.addEventListener('online', () => { online = true; render(); void refreshLicense(true); });
 window.addEventListener('offline', () => { online = false; render(); });
 
+async function refreshLicense(force = false): Promise<void> {
+  try {
+    const result = await verifyLicense(force);
+    if (!result) return;
+    unlocked = result.valid;
+    licenseNotice = unlocked
+      ? 'License restored. Unlimited local takes are active.'
+      : 'That license is not active. Check the token and try again.';
+  } catch {
+    // A license is only usable offline after a recent successful validation.
+    unlocked = cachedUnlock();
+    if (!unlocked) licenseNotice = 'Could not verify the license yet. Your free features still work; we’ll try again when you’re online.';
+  }
+  render();
+}
+
 async function init(): Promise<void> {
-  if (captureLicense()) unlocked = true;
+  if (captureLicense()) {
+    unlocked = false;
+    licenseNotice = 'Checking your license. Free features stay available until it is confirmed.';
+  }
   [decks, takes, settings] = await Promise.all([db.decks(), db.takes(), db.settings()]);
   render();
-  try {
-    const result = await verifyLicense();
-    if (result) { unlocked = result.valid; if (!result.valid) licenseNotice = 'License no longer active. Free rehearsal remains available.'; render(); }
-  } catch { /* Cached state remains; core experience stays available offline. */ }
+  void refreshLicense();
   if ('serviceWorker' in navigator) {
     const registration = await navigator.serviceWorker.register('/sw.js');
     registration.addEventListener('updatefound', () => {
