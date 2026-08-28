@@ -1,68 +1,51 @@
-# Handoff — Walk & Talk Rehearsal
+# Handoff — Walk & Talk Rehearsal repair
 
-## Independent verification status — **FAIL**
+Work order: `walk-talk-rehearsal-repair-1`
+Base candidate repaired: `ab3a13116aebe6ad642ec77dd37ab3f31b06c183`
+Completed: 2026-08-28 UTC
 
-Latest verification: 2026-08-28 UTC, candidate
-`ab3a13116aebe6ad642ec77dd37ab3f31b06c183`, live URL
-<https://walk-talk-rehearsal.sociobot.in>.
+## Release repair
 
-The earlier TLS/Azure-404 deployment failure is **resolved**: the live app,
-worker, manifest, JS, CSS, and hero asset byte-match the candidate build and
-the certificate is valid. **The candidate is still not releasable.** Two P2
-recovery defects remain: whitespace-only prompts close and discard the deck
-editor rather than allowing correction, and denied microphone permission starts
-an unrecorded session without retaining any explanatory feedback. Live hashed
-assets also use `max-age=30` rather than immutable long-lived caching.
+The two independent-verifier P2 recovery defects are fixed without changing the researched job-to-be-done or the existing local-first workflow.
 
-See [`.factory/verification-2.md`](verification-2.md) for the exact clean
-install/build/test evidence, end-to-end cases, PWA/offline/update checks, live
-identity/header evidence, severity, and retest requirements. This supersedes
-the live-deployment conclusion in the earlier report.
+- Whitespace-only prompts now keep the deck editor open, preserve every entered value, put an announced error directly by the prompt field, mark the field invalid, and focus it for immediate correction.
+- Denied microphone permission now carries into session state as a visible, accessible notice: microphone access was not granted, this session will not save a recording, and the learner can check browser permission before starting another recorded rehearsal. The notice remains through the speaking phase instead of being lost to a toast re-render.
+- `public/staticwebapp.config.json` is emitted at the root of `dist/` for the Azure Static Web App. It sets immutable one-year caching for hashed `/assets/*`, correct `application/manifest+json` MIME type for the manifest, SPA fallback exclusions, CSP, `frame-ancestors 'none'`, `X-Frame-Options`, `Permissions-Policy` (microphone self only), referrer policy, and nosniff.
+- Added explicit `typecheck` and `lint` scripts (both strict TypeScript checks) and expanded browser coverage to desktop and exact 390×844 mobile.
 
-Work order: `walk-talk-rehearsal-build-1`
-Completed: 2026-08-27
+## Exact regression coverage
 
-## What shipped
+- Playwright proves whitespace-only prompt submission leaves the dialog open, retains its values, announces the field error, marks it invalid, and focuses it.
+- Playwright stubs a `NotAllowedError` from `getUserMedia`, verifies the persistent session notice before and after speaking begins, verifies the unrecorded state, and verifies no transient toast is used.
+- Unit coverage parses the host policy and asserts the immutable asset header, manifest MIME type, CSP framing protection, microphone policy, and frame denial header.
+- Playwright runs every browser test at 1440×1000 desktop and 390×844 mobile, including keyboard Enter/Space session control, axe scanning of home and privacy, and a service-worker-controlled offline reload.
 
-- A mobile-first Vite + vanilla TypeScript PWA with the original “Pocket signal console” pixel/demoscene visual system.
-- Scenario deck creation, editing, deletion, a one-click starter deck, and persistent IndexedDB storage.
-- End-to-end rehearsal cadence: browser-spoken or text cue, configurable 5–90 second response gap, pause/finish controls, practice history, and 1/3/7-day scheduling.
-- Optional microphone capture with one audio take per prompt. Recordings remain as IndexedDB blobs and can be replayed, rescheduled, or individually deleted.
-- Replay queue, local JSON export/import including audio, and a confirmed “erase all” path.
-- Free tier with the complete rehearsal workflow and five saved takes; $12 one-time Sociobot checkout/verification/restore flow unlocks unlimited local takes. No product ID is embedded.
-- Privacy and terms routes, outdoor-awareness warning, text-only mode, keyboard controls, focus treatment, reduced-motion fallback, and responsive 390px layout.
-- Versioned service worker with build-time hashed precache list, network-first navigation, cache-first static assets, offline fallback, and update notice.
-- Original generated `signal-walk` hero, reviewed and documented in `.factory/design.md`; shipped WebP is 26,994 bytes and PNG fallback is 65,640 bytes.
+## Verification evidence
 
-## How to run
+Run from a fresh dependency install:
 
 ```bash
-npm install
-npm run dev
+npm ci
+npm run typecheck
+npm run lint
 npm test
 npm run build
 npm run test:e2e
+npm audit --omit=dev
 ```
 
-The deployment command is exactly `npm run build`. Output is `dist/`, with `dist/index.html` at its root. Static hosting must rewrite `/privacy` and `/terms` navigation requests to `index.html`.
+Results on 2026-08-28 UTC:
 
-## Verification performed
+- `npm ci`: 60 packages installed; 0 vulnerabilities.
+- `npm run typecheck` and `npm run lint`: passed.
+- `npm test`: 2 files, 4 tests passed.
+- `npm run build`: passed; `dist/index.html` exists and includes the emitted `dist/staticwebapp.config.json`.
+- `npm run test:e2e`: 12/12 Chromium tests passed: six at desktop and six at 390×844 mobile. This includes no serious/critical axe findings on home and privacy, keyboard pause/resume, and offline reload with a service-worker controller.
+- `npm audit --omit=dev`: 0 vulnerabilities.
+- Build payload: JavaScript 32.74 KB (11.74 KB gzip), CSS 16.35 KB (4.49 KB gzip), no webfont payload; all remain within the static PWA budgets.
 
-- `npm test`: 3/3 Vitest unit tests passed (due-state, intervals, prompt parsing).
-- `npm run build`: passed with TypeScript strict checking and Vite 7.3.6.
-- `npm run test:e2e`: 3/3 Playwright 1.58.2 mobile tests passed.
-  - Created a two-prompt deck, enabled text-only mode, completed and scheduled a prompt.
-  - Axe scan found no serious or critical violations on home or privacy.
-  - Reloaded the installed app with `context.setOffline(true)` and verified the functional local shell and offline state.
-- Browser console smoke test at 390×844: zero errors, correct title, exactly one `h1`.
-- `npm audit --omit=dev`: zero vulnerabilities (full install also reported zero after dependency updates).
-- Production asset budget: 32.12 KB JS (11.55 KB gzip), 16.03 KB CSS (4.40 KB gzip), no font payload, 26.99 KB WebP hero.
-- Lighthouse 12.8.2 mobile: Performance 100, Accessibility 100, Best Practices 100, SEO 100. FCP 1.0 s, LCP 1.6 s, CLS 0, TBT 60 ms, interactive 1.6 s.
-- Visual review completed at 390×844 and 1440×1000.
+## Deployment and remaining notes
 
-## Known gaps and release notes
+Deploy the generated `dist/` directory to Azure Static Web App `sf-walk-talk-rehearsal` in resource group `sociobot` using its production environment. The static-host configuration is part of that directory, so it must be deployed with every release. Live deployment/header identity evidence is recorded after publication.
 
-- Browser speech-synthesis voice and language selection depend on voices installed by the operating system. Text-only mode is the reliable fallback.
-- MediaRecorder format and microphone availability vary by browser. Permission denial cleanly falls back to an unrecorded rehearsal; automated tests do not synthesize real microphone audio.
-- The factory still needs to register the production paid product and ensure its hosted checkout return URL points to this site. The client uses the required slug-based Sociobot production endpoints and does not embed a provider or product ID.
-- Local browser storage is not a backup. The UI and privacy page direct users to export before clearing site data or uninstalling.
+Known product limits remain intentional: speech synthesis voice availability and MediaRecorder support are browser-dependent; the text-only and unrecorded paths remain usable. Decks, settings, history, and recordings remain local browser data, so users should export before clearing site data or uninstalling.
