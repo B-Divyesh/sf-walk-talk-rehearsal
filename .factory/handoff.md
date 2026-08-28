@@ -41,6 +41,9 @@ Browser coverage includes the rehearsal flow, invalid deck recovery,
 denied-microphone recovery, Enter/Space keyboard session controls, axe scans
 of home and privacy (no serious/critical violations), offline reload under
 `context.setOffline(true)`, and the forged-token authorization regression.
+A separate production-shell update smoke served a changed worker revision,
+called `registration.update()`, and observed both the active controller and
+the in-app “Update ready. Reload when you finish this rehearsal.” notice.
 
 The fresh production payload is 32,959 B JavaScript (11,800 B gzip), 16,346 B
 CSS (4,490 B gzip), and a 26,994 B WebP hero — within static-product budgets.
