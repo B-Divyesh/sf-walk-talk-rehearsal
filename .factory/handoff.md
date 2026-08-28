@@ -66,8 +66,38 @@ npm run test:e2e
 /opt/fleet/lib/deploy-static.sh walk-talk-rehearsal dist
 ```
 
-Deployment and live-domain evidence will be appended after the static upload
-and strict HTTPS verification complete.
+## Deployment and live identity
+
+Deployed successfully with `/opt/fleet/lib/deploy-static.sh
+walk-talk-rehearsal dist` (Azure deployment ID
+`c6202702-e1fa-495b-8d28-3d82e7450c28`). Strict HTTPS verification at
+`https://walk-talk-rehearsal.sociobot.in` returned 200 with a certificate for
+`CN = walk-talk-rehearsal.sociobot.in` (DigiCert; valid 2026-08-27 through
+2027-02-27).
+
+Fresh `dist/` and the live site byte-match for `index.html`, hashed JS, hashed
+CSS, `sw.js`, and `manifest.webmanifest`:
+
+| File | SHA-256 |
+| --- | --- |
+| `index.html` | `0a6c872b150b0208b4d164f03ffc6bb0a9d36c6a52b15dab1afd9e5c0d716d19` |
+| `assets/index-CmMkD-GS.js` | `b5fff11ecd835fcef801ae0b0555be942439d850bb8e8ce3e17b9ab0593d14c0` |
+| `assets/index-BdmbldLp.css` | `68eb65fd1b892a81038b34a4aacfb5a7815c5628ef76e6c0b9461e5ebaf2bca8` |
+| `sw.js` | `2074f7858944d40acaa4566245236e58e86600c12d8e0e1deae5ea62722c3098` |
+| `manifest.webmanifest` | `789a531138965f732ce67350264effa176f463d2104b5441acabf97264a9160d` |
+
+Live headers include the expected CSP (`frame-ancestors 'none'`),
+Permissions-Policy, `X-Frame-Options: DENY`, nosniff, strict referrer policy,
+and HSTS. Hashed JS has `Cache-Control: public, max-age=31536000, immutable`;
+the manifest is served as `application/manifest+json` with a one-hour cache.
+
+A strict real-browser live smoke at 1440 × 1000 and 390 × 844 found HTTP 200,
+the expected title, `lang=en`, exactly one `h1` and `main`, the meaningful hero
+alt text, an active service-worker controller, zero console/page errors, and
+only the app origin on a normal first load. A fresh live 390 px context with
+the billing API blocked and `?license=forged-token` ended at the stripped URL,
+showed **Keep every take**, displayed zero `.license-active` elements, and
+kept the honest verification-unavailable notice.
 
 ## Known gaps / next steps
 
